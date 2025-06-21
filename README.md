@@ -1,2 +1,2 @@
-# PHP
-This repository contains a set of PHP scripts and tools designed for ethical hacking, security testing, and cybersecurity education. It is intended to help developers and security enthusiasts understand common web vulnerabilities and how to test for them using PHP.
+# WAPT
+This repository is a curated collection of tools, resources, and guides for performing Web Application Penetration Testing (WAPT). It is designed to help ethical hackers, security researchers, and learners identify, exploit, and mitigate common web vulnerabilities.
