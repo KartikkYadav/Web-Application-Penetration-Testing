@@ -1,0 +1,399 @@
+# 🔐 Broken Function Level Authorization (BFLA)
+
+---
+
+# 📌 Overview
+
+BFLA occurs when:
+
+- API does NOT enforce authorization
+- Users access functions they shouldn't
+
+👉 Example:
+
+    Normal user → Access admin API
+
+---
+
+# ⚠️ Vulnerability Description
+
+- Missing role checks
+- Over-permissive endpoints
+- Client-side authorization only
+
+---
+
+# 🔍 How BFLA Happens
+
+1. No role validation  
+2. Admin endpoints exposed  
+3. Frontend-only restrictions  
+4. Missing backend checks  
+
+---
+
+# 🔥 Real Vulnerable Endpoint
+
+    DELETE /identity/api/v2/admin/videos/52
+
+👉 Admin-only functionality
+
+---
+
+# 🧪 PoC
+
+Request:
+
+    DELETE /identity/api/v2/admin/videos/52
+    Authorization: Bearer <USER_TOKEN>
+
+JWT:
+
+    {
+      "role": "user"
+    }
+
+---
+
+# 🚨 Issue
+
+- User role = user
+- Still able to access admin API
+
+👉 No authorization check
+
+---
+
+# 💥 Impact
+
+- Delete data
+- Perform admin actions
+- Full privilege escalation
+- System compromise
+
+---
+
+# 📊 Severity
+
+- HIGH
+
+---
+
+# 🔎 Indicators
+
+Look for endpoints:
+
+    /admin/
+    /internal/
+    /management/
+    /superuser/
+
+Signs:
+
+- Works with normal user token
+- No 403 response
+- No role validation
+
+---
+
+# 🛡️ Remediation
+
+---
+
+## 1. Implement RBAC
+
+    if user.role != "admin":
+        return 403
+
+---
+
+## 2. Enforce Server-Side Authorization
+
+❌ Never trust frontend
+
+---
+
+## 3. Restrict Admin Endpoints
+
+    /admin/* → Admin only
+
+---
+
+## 4. Centralized Authorization Middleware
+
+- Validate every request
+
+---
+
+## 5. Logging & Monitoring
+
+- Track admin actions
+
+---
+
+# ✅ Secure Response Example
+
+    HTTP/1.1 403 Forbidden
+
+    {
+      "error": "Unauthorized access"
+    }
+
+---
+
+# 📊 Summary
+
+| Issue | BFLA |
+|------|------|
+| Type | Authorization |
+| Impact | Privilege Escalation |
+| Severity | High |
+
+---
+
+
+# 🚦 Rate Limiting (API Security)
+
+---
+
+# 📌 Overview
+
+Rate Limiting controls:
+
+- Number of requests a client can send
+- Within a specific time window
+
+👉 Purpose:
+
+- Prevent abuse
+- Protect backend resources
+- Ensure API stability
+
+---
+
+# 🧠 Core Concept
+
+Without rate limiting:
+
+    Attacker → Unlimited requests → Server overload
+
+With rate limiting:
+
+    Attacker → Blocked after threshold
+
+---
+
+# ⚠️ Why Rate Limiting is Important
+
+1. Prevents DoS/DDoS attacks  
+2. Protects backend services  
+3. Ensures fair usage  
+4. Improves system stability  
+5. Mitigates brute force attacks  
+
+---
+
+# ⚙️ How Rate Limiting Works
+
+---
+
+## 1. Request Threshold
+
+- Max allowed requests
+
+Example:
+
+    100 requests/minute
+    10 requests/second
+
+---
+
+## 2. Time Window
+
+- Duration of counting requests
+
+Examples:
+
+- Per second
+- Per minute
+- Per hour
+- Per day
+
+---
+
+## 3. Identification Mechanism
+
+Rate limit applied based on:
+
+- IP Address
+- API Key
+- User Account
+- Session Token
+- JWT Token
+
+---
+
+# 🔥 Real Vulnerability Example
+
+### API Endpoint
+
+    POST /workshop/api/merchant/contact_mechanic
+
+### Request Body
+
+    {
+      "mechanic_code": "TRAC_JHN",
+      "problem_details": "test",
+      "vin": "4CVZR19NKXF615223",
+      "mechanic_api": "http://192.168.1.28:8888/workshop/api/mechanic/receive_report",
+      "repeat_request_if_failed": true,
+      "number_of_repeats": 100
+    }
+
+---
+
+# 🚨 Security Issue
+
+Parameter:
+
+    number_of_repeats: 100
+
+👉 Allows:
+
+- Multiple backend requests
+- Rate limit bypass
+- Internal flooding
+
+---
+
+# 💥 Impact
+
+- Resource exhaustion
+- Backend service flooding
+- Internal API abuse
+- DoS conditions
+
+---
+
+# 🧪 Testing Methodology
+
+---
+
+## 1. Request Flooding
+
+Use:
+
+- Burp Intruder
+- Turbo Intruder
+- ffuf
+- Custom scripts
+
+Goal:
+
+- Check if API blocks excessive requests
+
+---
+
+## 2. Observe Server Response
+
+Look for:
+
+    HTTP/1.1 429 Too Many Requests
+
+Headers:
+
+    X-RateLimit-Limit
+    X-RateLimit-Remaining
+    Retry-After
+
+---
+
+## 3. Token-Based Testing
+
+Test limits on:
+
+- IP vs JWT vs user
+
+👉 Weak design allows bypass using:
+
+- Multiple tokens
+- Multiple sessions
+
+---
+
+## 4. Parameter Abuse
+
+Test:
+
+    number_of_repeats
+    repeat_request_if_failed
+
+👉 Check backend loops
+
+---
+
+# 🚨 Indicators of Weak Rate Limiting
+
+- No 429 responses
+- Unlimited requests allowed
+- Rate limit only on frontend
+- Easily bypassed using new tokens
+
+---
+
+# 🛡️ Remediation
+
+---
+
+## 1. Server-Side Rate Limiting
+
+Example:
+
+    10 req/sec
+    100 req/min per user
+
+---
+
+## 2. Multi-Level Enforcement
+
+Apply on:
+
+- IP
+- User
+- API key
+
+---
+
+## 3. Block Client-Controlled Loops
+
+❌ Do NOT trust:
+
+    number_of_repeats
+
+---
+
+## 4. Proper Throttling
+
+    HTTP 429 Too Many Requests
+
+Headers:
+
+    Retry-After: 60
+
+---
+
+## 5. Use API Gateway / WAF
+
+- Enforce limits before backend
+
+---
+
+# 📊 Summary
+
+| Issue | Rate Limiting |
+|------|--------------|
+| Type | Resource Abuse |
+| Impact | DoS / Brute Force |
+| Severity | Medium–High |
+
+---
